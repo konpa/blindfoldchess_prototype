@@ -1,59 +1,20 @@
 <template>
-  <div class="login">
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-      <div class="px-4 py-5 sm:px-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">
-          Blindfold LiChess
-        </h3>
-        <p class="mt-1 max-w-2xl text-sm text-gray-500">
-          Blindfold chess for lichess.org
-        </p>
-      </div>
-      <div v-if="lichessAccessToken" class="border-t border-gray-200">
-        <dl>
-          <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">
-              Username
-            </dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-              {{ user.username }}
-            </dd>
-          </div>
-          <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">
-              Link to profile
-            </dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-              <a :href="user.url" target="_blank">{{ user.url }}</a>
-            </dd>
-          </div>
-          <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">
-              Correspondence
-            </dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-              {{ user.perfs.correspondence.rating }} / {{ user.perfs.correspondence.games }} game(s)
-            </dd>
-          </div>
-        </dl>
-      </div>
-    </div>
-    <div class="mt-8 space-y-6">
+  <div class="mt-2 space-y-2">
+    <div class="flex justify-between items-center">
+      <h3 class="text-lg leading-6 font-medium text-gray-900 uppercase">
+        Blindfold Lichess
+      </h3>
       <div v-if="lichessAccessToken">
-        <t-button
-          v-if="lichessAccessToken"
-          v-on:click="logout"
-          class="w-full"
-          variant="error"
-        >Logout</t-button>
+        <a :href="user.url" target="_blank" class="underline">{{ user.username }}</a>
+         / <a v-on:click="logout" class="underline">logout</a>
       </div>
       <div v-else>
-        <t-button v-on:click="login" class="w-full">Login with lichess.org</t-button>
+        <a href="#" v-on:click="login" class="underline">Login with lichess.org</a>
       </div>
-      <t-alert v-if="error" variant="danger" show>
-        {{ error }}
-      </t-alert>
     </div>
+    <t-alert v-if="error" variant="danger" show>
+      {{ error }}
+    </t-alert>
   </div>
 </template>
 
@@ -68,7 +29,7 @@ export default Vue.extend({
         authorizationUrl: 'https://lichess.org/oauth',
         tokenUrl: 'https://lichess.org/api/token',
         clientId: 'blindfoldchess.dev',
-        scopes: ['email:read'],
+        scopes: ['challenge:write', 'bot:play', 'board:play'],
         redirectUrl: (() => {
           const url = new URL(window.location.href);
           url.search = '';
