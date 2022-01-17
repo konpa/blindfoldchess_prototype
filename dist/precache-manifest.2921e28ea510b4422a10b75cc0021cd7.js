@@ -1,19 +1,19 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "eb2c0d41166d4147989d",
+    "revision": "56bb8dbde4eb4d11a227",
     "url": "/blindfoldchess/css/app.f659c3fc.css"
   },
   {
-    "revision": "4b3d53b119ab79053ac4072ab5cd486e",
+    "revision": "01b8bab2248916b1ba2e3ce44627ac2b",
     "url": "/blindfoldchess/index.html"
   },
   {
-    "revision": "eb2c0d41166d4147989d",
-    "url": "/blindfoldchess/js/app.c5cf156b.js"
+    "revision": "56bb8dbde4eb4d11a227",
+    "url": "/blindfoldchess/js/app.4f24be2c.js"
   },
   {
-    "revision": "eb54b1e5b61f1f0937cf",
-    "url": "/blindfoldchess/js/chunk-vendors.0992e65c.js"
+    "revision": "e1fc8c16bed9cc2dca4d",
+    "url": "/blindfoldchess/js/chunk-vendors.4ebfebee.js"
   },
   {
     "revision": "4de3673fd544acb10b8f059434387ffd",
