@@ -1,12 +1,16 @@
 <template>
-  <div v-if="lichessAccessToken" class="mt-6 flex flex-col">
+  <div v-if="isLoggedIn" class="mt-6 flex flex-col">
     <h2 class="text-lg leading-6 font-medium text-gray-900">
       Current game (Stockfish level {{ AILevel }})
     </h2>
-    <div v-if="gameLink">
-      <a :href="gameLink" target="_blank">{{ gameLink }}</a>
+    <div v-if="gameLink" class="mt-2">
+      Analyze on Lichess:
+      <a :href="gameLink" target="_blank" class="underline">{{ gameLink }}</a>
+      <br>
+      Or copy/paste PGN: <br>
+      <pre v-html="gamePGN"></pre>
     </div>
-    <div v-if="gameLines.length" class="mt-2">
+    <div v-if="playingGame" class="mt-2">
       <input
         v-model="showBoardDiagram"
         type="checkbox"
@@ -16,21 +20,24 @@
       >
       <label for="showBoardDiagram">Show board diagram</label>
     </div>
-    <div v-if="showBoardDiagram">
+    <div v-if="playingGame && showBoardDiagram">
       <img :src="boardImage">
     </div>
     <t-alert v-if="alertMessage" :variant="alertVariant" show class="mt-2">
       {{ alertMessage }}
     </t-alert>
-    <div v-if="gameLines.length">
-      Your move:
-      <input
-        type="text"
-        v-model="myNextMove"
-        v-on:keyup.enter="sendMove"
-        autofocus
-        class="border-solid border-2 w-12 mt-2"
-      >
+    <div v-if="playingGame">
+      <span v-if="isStreaming">
+        Your move:
+        <input
+          type="text"
+          v-model="myNextMove"
+          v-on:keyup.enter="sendMove"
+          autofocus
+          class="border-solid border-2 w-12 mt-2"
+        >
+        or <a href="#" v-on:click="resignGame" class="underline">resign</a>
+      </span>
       <ul class="mt-2">
         <li v-for="(line, index) in gameLines" :key="index" v-html="line"></li>
       </ul>
@@ -58,6 +65,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { mapState } from 'vuex';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import Chess, { ChessInstance } from 'chess.js';
@@ -105,13 +113,14 @@ export default Vue.extend({
 
   data() {
     return {
-      lichessAccessToken: '' as string,
       mostUrgentGame: {} as apiResponse,
       chessGame: {} as ChessInstance,
+      playingGame: false as boolean,
       gameId: '' as string,
       gameLines: [] as Array<string | null>,
       gameWinner: '' as string,
       gameLink: '' as string,
+      gamePGN: '' as string,
       boardImage: '' as string,
       AILevel: '1' as string,
       numberOfMoves: 0 as number,
@@ -119,18 +128,35 @@ export default Vue.extend({
       alertMessage: '' as string,
       alertVariant: '' as string,
       showBoardDiagram: false as boolean,
+      isStreaming: false as boolean,
     };
   },
 
+  computed: mapState([
+    'lichessAccessToken',
+    'isLoggedIn',
+  ]),
+
   watch: {
-    gameLines: {
-      deep: true,
-      handler() {
-        if (this.$refs.nextMove) {
-          // eslint-disable-next-line no-unused-expressions
-          (this.$refs.nextMove as HTMLElement)?.focus();
+    async lichessAccessToken() {
+      if (
+        this.$store.state.isLoggedIn
+        && this.$store.state.lichessAccessToken
+      ) {
+        if (Object.keys(this.mostUrgentGame).length === 0) {
+          await this.getMostUrgentGame();
         }
-      },
+
+        if (
+          typeof this.mostUrgentGame.gameId === 'string'
+          && this.isStreaming === false
+        ) {
+          this.gameId = this.mostUrgentGame.gameId;
+          this.chessGame = new Chess();
+          this.playingGame = true;
+          await this.streamGame(this.gameId);
+        }
+      }
     },
   },
 
@@ -140,35 +166,40 @@ export default Vue.extend({
       const res = await fetch('https://lichess.org/api/account/playing?nb=1', {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${this.lichessAccessToken}`,
+          Authorization: `Bearer ${this.$store.state.lichessAccessToken}`,
         },
       });
 
       const response = (await res.json());
 
-      this.mostUrgentGame = response.nowPlaying && response.nowPlaying[0]
-        ? response.nowPlaying[0]
-        : {};
-
-      this.AILevel = this.mostUrgentGame.opponent.ai;
+      if (response.nowPlaying && response.nowPlaying[0]) {
+        // eslint-disable-next-line prefer-destructuring
+        this.mostUrgentGame = response.nowPlaying[0];
+        this.AILevel = this.mostUrgentGame?.opponent?.ai;
+      }
     },
 
     async streamGame(gameId: string) {
       const stream = fetch(`https://lichess.org/api/board/game/stream/${gameId}`, {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${this.lichessAccessToken}`,
+          Authorization: `Bearer ${this.$store.state.lichessAccessToken}`,
           Accept: 'application/x-ndjson',
         },
       });
 
+      this.isStreaming = true;
+
       const onMessage = (obj: apiResponse) => {
         if (
           obj.type === 'gameState'
-          && obj.status === 'mate'
+          && obj.winner
         ) {
           if (typeof obj.winner === 'string') {
             this.gameWinner = obj.winner;
+            const pgn = this.chessGame.pgn();
+            this.importGame(pgn);
+            this.gamePGN = pgn;
           }
         }
 
@@ -218,6 +249,7 @@ export default Vue.extend({
       const onComplete = () => {
         this.alertMessage = 'The stream has completed.';
         this.alertVariant = '';
+        this.isStreaming = false;
       };
 
       stream
@@ -229,7 +261,7 @@ export default Vue.extend({
       const res = await fetch('https://lichess.org/api/challenge/ai', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${this.lichessAccessToken}`,
+          Authorization: `Bearer ${this.$store.state.lichessAccessToken}`,
         },
         body: new URLSearchParams({
           level: '1',
@@ -242,6 +274,7 @@ export default Vue.extend({
 
       if (this.gameId) {
         this.chessGame = new Chess();
+        this.playingGame = true;
         await this.streamGame(this.gameId);
       }
     },
@@ -258,7 +291,7 @@ export default Vue.extend({
       const res = await fetch(`https://lichess.org/api/board/game/${this.gameId}/move/${move.from}${move.to}`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${this.lichessAccessToken}`,
+          Authorization: `Bearer ${this.$store.state.lichessAccessToken}`,
         },
       });
 
@@ -279,23 +312,40 @@ export default Vue.extend({
       const res = await fetch('https://lichess.org/api/import', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${this.lichessAccessToken}`,
+          Authorization: `Bearer ${this.$store.state.lichessAccessToken}`,
         },
         body: new URLSearchParams({ pgn }),
       });
 
-      this.gameLink = (await res.json()).id;
+      this.gameLink = (await res.json()).url;
+    },
+
+    async resignGame() {
+      await fetch(`https://lichess.org/api/board/game/${this.gameId}/resign`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.$store.state.lichessAccessToken}`,
+        },
+      });
     },
   },
 
   async mounted() {
-    if (localStorage.lichessAccessToken) {
-      this.lichessAccessToken = localStorage.lichessAccessToken;
-      await this.getMostUrgentGame();
+    if (
+      this.$store.state.isLoggedIn
+      && this.$store.state.lichessAccessToken
+    ) {
+      if (Object.keys(this.mostUrgentGame).length === 0) {
+        await this.getMostUrgentGame();
+      }
 
-      if (typeof this.mostUrgentGame.gameId === 'string') {
+      if (
+        typeof this.mostUrgentGame.gameId === 'string'
+        && this.isStreaming === false
+      ) {
         this.gameId = this.mostUrgentGame.gameId;
         this.chessGame = new Chess();
+        this.playingGame = true;
         await this.streamGame(this.gameId);
       }
     }

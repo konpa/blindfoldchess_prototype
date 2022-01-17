@@ -4,9 +4,9 @@
       <h3 class="text-lg leading-6 font-medium text-gray-900 uppercase">
         Blindfold Lichess
       </h3>
-      <div v-if="lichessAccessToken">
+      <div v-if="isLoggedIn">
         <a :href="user.url" target="_blank" class="underline">{{ user.username }}</a>
-         / <a v-on:click="logout" class="underline">logout</a>
+         / <a href="#" v-on:click="logout" class="underline">logout</a>
       </div>
       <div v-else>
         <a href="#" v-on:click="login" class="underline">Login with lichess.org</a>
@@ -20,9 +20,11 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { mapState, mapMutations } from 'vuex';
 import { AccessContext, OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
 
 export default Vue.extend({
+
   data() {
     return {
       oauth: new OAuth2AuthCodePKCE({
@@ -44,14 +46,26 @@ export default Vue.extend({
       }),
       accessContext: {} as AccessContext,
       user: {} as Record<string, unknown>,
-      lichessAccessToken: '' as string,
       error: '' as unknown,
     };
   },
+
+  computed: mapState([
+    'lichessAccessToken',
+    'isLoggedIn',
+  ]),
+
   methods: {
+
+    ...mapMutations([
+      'setLichessAccessToken',
+      'setIsLoggedIn',
+    ]),
+
     login() {
       this.oauth.fetchAuthorizationCode();
     },
+
     async getUsername() {
       const res = await fetch('https://lichess.org/api/account', {
         method: 'GET',
@@ -61,6 +75,7 @@ export default Vue.extend({
       });
       this.user = (await res.json());
     },
+
     async logout() {
       this.accessContext = {};
       this.error = '';
@@ -74,13 +89,16 @@ export default Vue.extend({
         },
       });
 
-      this.lichessAccessToken = '';
+      this.$store.commit('setLichessAccessToken', '');
+      this.$store.commit('setIsLoggedIn', false);
       localStorage.removeItem('lichessAccessToken');
     },
   },
+
   async mounted() {
     if (localStorage.lichessAccessToken) {
-      this.lichessAccessToken = localStorage.lichessAccessToken;
+      this.$store.commit('setLichessAccessToken', localStorage.lichessAccessToken);
+      this.$store.commit('setIsLoggedIn', true);
       await this.getUsername();
     } else {
       try {
@@ -90,7 +108,8 @@ export default Vue.extend({
           this.accessContext = await this.oauth.getAccessToken();
 
           if (this.accessContext.token) {
-            this.lichessAccessToken = this.accessContext.token.value;
+            this.$store.commit('setLichessAccessToken', this.accessContext.token.value);
+            this.$store.commit('setIsLoggedIn', true);
             localStorage.lichessAccessToken = this.accessContext.token.value;
           }
 
