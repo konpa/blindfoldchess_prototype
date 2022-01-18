@@ -37,14 +37,14 @@
     <div v-if="playingGame">
       <div class="keyboard flex flex-wrap mt-2">
         <div
-          class="key"
           v-for="(key, index) in keyboard" :key="index"
+          v-html="key"
+          v-bind:class="[key === 'break' ? 'key-break': 'key']"
           v-on:click="keyboardWrite(key)"
         >
-          {{ key }}
         </div>
-        <div class="key" v-on:click="keyboardErase()">&#9003;</div>
-        <div class="key" v-on:click="sendMove">&crarr;</div>
+        <div class="key key-erase" v-on:click="keyboardErase()">&#9003;</div>
+        <div class="key key-enter" v-on:click="sendMove">&crarr;</div>
       </div>
       <span v-if="isStreaming">
         Your move:
@@ -53,7 +53,7 @@
           v-model="myNextMove"
           v-on:keyup.enter="sendMove"
           autofocus
-          class="border-solid border-2 w-12 mt-2"
+          class="border-solid border-2 w-20 mt-2"
         >
         or <a href="#" v-on:click="resignGame" class="underline">resign</a>
       </span>
@@ -152,7 +152,9 @@ export default Vue.extend({
       /* eslint-disable comma-spacing */
       keyboard: [
         'a','b','c','d','e','f','g','h',
+        'break',
         '1','2','3','4','5','6','7','8',
+        'break',
         'x','K','Q','R','B','N',
       ],
       /* eslint-enable comma-spacing */
@@ -406,8 +408,21 @@ export default Vue.extend({
     margin-bottom: 5px;
     border-radius: 5px;
 }
+.key-break {
+  flex-basis: 100%;
+  height: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+}
 .key:hover {
   background: black;
   color: white;
+}
+.key-erase {
+  padding: 5px 8px;
+}
+.key-enter {
+  padding: 5px 15px;
 }
 </style>
