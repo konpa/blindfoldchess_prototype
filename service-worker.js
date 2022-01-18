@@ -14,16 +14,14 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/blindfoldchess/precache-manifest.aa45e85af5b0d0fe0d67be7ad674ea3f.js"
+  "/blindfoldchess/precache-manifest.e842cbff3916a1802a67d18b54014ec9.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "blindfoldchess"});
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
+workbox.core.skipWaiting();
+
+workbox.core.clientsClaim();
 
 /**
  * The workboxSW.precacheAndRoute() method efficiently caches and responds to
