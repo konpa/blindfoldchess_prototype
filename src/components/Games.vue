@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isLoggedIn" class="mt-6 flex flex-col">
+  <div v-if="isLoggedIn" class="mt-6">
     <h2 class="text-lg leading-6 font-medium text-gray-900">
       Current game (Stockfish level {{ AILevel }})
     </h2>
@@ -8,7 +8,7 @@
       <a :href="gameLink" target="_blank" class="underline">{{ gameLink }}</a>
       <br>
       Or copy/paste PGN: <br>
-      <pre v-html="gamePGN"></pre>
+      <div class="break-words bg-slate-300" v-html="gamePGN"></div>
     </div>
     <div v-if="playingGame" class="mt-2">
       <input
@@ -19,6 +19,14 @@
         class="mr-2"
       >
       <label for="showBoardDiagram">Show board diagram</label>
+      <input
+        v-model="showKeyboard"
+        type="checkbox"
+        id="showKeyboard"
+        name="showKeyboard"
+        class="ml-2 mr-2"
+      >
+      <label for="showKeyboard">Show keyboard</label>
     </div>
     <div v-if="playingGame && showBoardDiagram">
       <img :src="boardImage">
@@ -27,6 +35,17 @@
       {{ alertMessage }}
     </t-alert>
     <div v-if="playingGame">
+      <div class="keyboard flex flex-wrap mt-2">
+        <div
+          class="key"
+          v-for="(key, index) in keyboard" :key="index"
+          v-on:click="keyboardWrite(key)"
+        >
+          {{ key }}
+        </div>
+        <div class="key" v-on:click="keyboardErase()">&#9003;</div>
+        <div class="key" v-on:click="sendMove">&crarr;</div>
+      </div>
       <span v-if="isStreaming">
         Your move:
         <input
@@ -129,6 +148,14 @@ export default Vue.extend({
       alertVariant: '' as string,
       showBoardDiagram: false as boolean,
       isStreaming: false as boolean,
+      showKeyboard: true as boolean,
+      /* eslint-disable comma-spacing */
+      keyboard: [
+        'a','b','c','d','e','f','g','h',
+        '1','2','3','4','5','6','7','8',
+        'x','K','Q','R','B','N',
+      ],
+      /* eslint-enable comma-spacing */
     };
   },
 
@@ -328,6 +355,14 @@ export default Vue.extend({
         },
       });
     },
+
+    keyboardWrite(key: string) {
+      this.myNextMove = `${this.myNextMove}${key}`;
+    },
+
+    keyboardErase() {
+      this.myNextMove = this.myNextMove.slice(0, -1);
+    },
   },
 
   async mounted() {
@@ -362,5 +397,17 @@ export default Vue.extend({
 .white-move {
   display: inline-block;
   min-width: 100px;
+}
+.key {
+    cursor: pointer;
+    border: 1px solid;
+    padding: 5px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
+.key:hover {
+  background: black;
+  color: white;
 }
 </style>
