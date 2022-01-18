@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/blindfoldchess/precache-manifest.30cb6898b81917446a9a32cd6bd706a5.js"
+  "/blindfoldchess/precache-manifest.aa45e85af5b0d0fe0d67be7ad674ea3f.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "blindfoldchess"});
