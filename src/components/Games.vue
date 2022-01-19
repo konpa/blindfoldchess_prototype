@@ -8,57 +8,76 @@
       <a :href="gameLink" target="_blank" class="underline">{{ gameLink }}</a>
       <br>
       Or copy/paste PGN: <br>
-      <div class="break-words bg-slate-300" v-html="gamePGN"></div>
+      <div class="break-words p-4 bg-gray-100" v-html="gamePGN"></div>
     </div>
-    <div v-if="playingGame" class="mt-2">
-      <input
-        v-model="showBoardDiagram"
-        type="checkbox"
-        id="showBoardDiagram"
-        name="showBoardDiagram"
-        class="mr-2"
-      >
-      <label for="showBoardDiagram">Show board diagram</label>
-      <input
-        v-model="showKeyboard"
-        type="checkbox"
-        id="showKeyboard"
-        name="showKeyboard"
-        class="ml-2 mr-2"
-      >
-      <label for="showKeyboard">Show keyboard</label>
-    </div>
-    <div v-if="playingGame && showBoardDiagram">
+    <div v-if="playingGame && paramShowBoardDiagram">
       <img :src="boardImage">
     </div>
     <t-alert v-if="alertMessage" :variant="alertVariant" show class="mt-2">
       {{ alertMessage }}
     </t-alert>
-    <div v-if="playingGame">
-      <div class="keyboard flex flex-wrap mt-2">
+    <div v-if="playingGame" class="mt-2">
+      <div v-if="paramShowKeyboard" class="keyboard flex flex-wrap">
         <div
           v-for="(key, index) in keyboard" :key="index"
-          v-html="key"
+          v-html="replaceFigures(key)"
           v-bind:class="[key === 'break' ? 'key-break': 'key']"
           v-on:click="keyboardWrite(key)"
         >
         </div>
-        <div class="key key-erase" v-on:click="keyboardErase()">&#9003;</div>
-        <div class="key key-enter" v-on:click="sendMove">&crarr;</div>
       </div>
       <span v-if="isStreaming">
-        Your move:
         <input
           type="text"
           v-model="myNextMove"
           v-on:keyup.enter="sendMove"
           autofocus
-          class="border-solid border-2 w-20 mt-2"
+          placeholder="Next move"
+          class="border-solid border-2 w-24 mt-2 mr-2"
         >
-        or <a href="#" v-on:click="resignGame" class="underline">resign</a>
+        <button
+          v-if="paramShowKeyboard"
+          class="key key-erase"
+          v-on:click="keyboardErase()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2
+              2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
+          </svg>
+        </button>
+        <button
+          v-if="paramShowKeyboard"
+          class="key key-enter"
+          v-on:click="sendMove"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7" />
+          </svg>
+        </button>
+        <button
+          class="key key-resign"
+          v-on:click="resignGame"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6
+              3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+          </svg>
+        </button>
       </span>
       <ul class="mt-2">
-        <li v-for="(line, index) in gameLines" :key="index" v-html="line"></li>
+        <li v-for="(line, index) in gameLines" :key="index" v-html="replaceFigures(line)"></li>
       </ul>
     </div>
     <div v-else>
@@ -155,16 +174,28 @@ export default Vue.extend({
         'break',
         '1','2','3','4','5','6','7','8',
         'break',
-        'x','K','Q','R','B','N',
+        'K','Q','R','B','N','x','-','O',
       ],
       /* eslint-enable comma-spacing */
+      figuresMapping: {
+        K: '&#9818;',
+        Q: '&#9819;',
+        R: '&#9820;',
+        B: '&#9821;',
+        N: '&#9822;',
+      } as { [key: string]: string; },
     };
   },
 
-  computed: mapState([
-    'lichessAccessToken',
-    'isLoggedIn',
-  ]),
+  computed: {
+    ...mapState([
+      'lichessAccessToken',
+      'isLoggedIn',
+      'paramShowKeyboard',
+      'paramShowBoardDiagram',
+      'paramShowFigures',
+    ]),
+  },
 
   watch: {
     async lichessAccessToken() {
@@ -365,6 +396,21 @@ export default Vue.extend({
     keyboardErase() {
       this.myNextMove = this.myNextMove.slice(0, -1);
     },
+
+    replaceFigures(str: string) {
+      let newStr = str;
+
+      if (this.paramShowFigures) {
+        Object.entries(this.figuresMapping).forEach((entry) => {
+          const [key, value] = entry;
+          if (newStr.includes(key)) {
+            newStr = newStr.replaceAll(key, value);
+          }
+        });
+      }
+
+      return newStr;
+    },
   },
 
   async mounted() {
@@ -418,11 +464,5 @@ export default Vue.extend({
 .key:hover {
   background: black;
   color: white;
-}
-.key-erase {
-  padding: 5px 8px;
-}
-.key-enter {
-  padding: 5px 15px;
 }
 </style>
