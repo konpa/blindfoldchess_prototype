@@ -185,6 +185,7 @@ export default Vue.extend({
         N: '&#9822;',
       } as { [key: string]: string; },
       moveSound: new Audio('audio/chess-move.mp3'),
+      firstMoveSent: false as boolean,
     };
   },
 
@@ -320,9 +321,10 @@ export default Vue.extend({
         this.boardImage = 'http://www.fen-to-image.com/image/26/double/coords/';
         this.boardImage += this.chessGame.fen();
 
-        this.moveSound.pause();
-        this.moveSound.currentTime = 0;
-        this.moveSound.play();
+        if (this.firstMoveSent) {
+          this.moveSound.currentTime = 0;
+          this.moveSound.play();
+        }
       };
 
       const onComplete = () => {
@@ -384,9 +386,10 @@ export default Vue.extend({
         this.alertMessage = '';
       }
 
-      this.moveSound.pause();
       this.moveSound.currentTime = 0;
       this.moveSound.play();
+
+      this.firstMoveSent = true;
 
       return true;
     },
