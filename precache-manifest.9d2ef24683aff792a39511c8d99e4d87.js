@@ -4,16 +4,16 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/blindfoldchess/audio/chess-move.mp3"
   },
   {
-    "revision": "4db447c6e4ff6e55f6b3",
+    "revision": "356cad96cf2c23fd471f",
     "url": "/blindfoldchess/css/app.1fc81be6.css"
   },
   {
-    "revision": "89f6bdee690804b26dcf7c1e54f894e6",
+    "revision": "4030a25d892e4c316b4d5dfd29615e08",
     "url": "/blindfoldchess/index.html"
   },
   {
-    "revision": "4db447c6e4ff6e55f6b3",
-    "url": "/blindfoldchess/js/app.b10f24be.js"
+    "revision": "356cad96cf2c23fd471f",
+    "url": "/blindfoldchess/js/app.93380ba9.js"
   },
   {
     "revision": "956899a9c68a41435c31",
