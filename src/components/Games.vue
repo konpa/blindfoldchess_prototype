@@ -184,7 +184,7 @@ export default Vue.extend({
         B: '&#9821;',
         N: '&#9822;',
       } as { [key: string]: string; },
-      moveSound: new Audio(),
+      moveSound: new Audio('audio/chess-move.mp3'),
     };
   },
 
@@ -320,7 +320,9 @@ export default Vue.extend({
         this.boardImage = 'http://www.fen-to-image.com/image/26/double/coords/';
         this.boardImage += this.chessGame.fen();
 
-        this.moveSound.src = 'audio/chess-move.mp3';
+        this.moveSound.pause();
+        this.moveSound.currentTime = 0;
+        this.moveSound.play();
       };
 
       const onComplete = () => {
@@ -382,7 +384,9 @@ export default Vue.extend({
         this.alertMessage = '';
       }
 
-      this.moveSound.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+      this.moveSound.pause();
+      this.moveSound.currentTime = 0;
+      this.moveSound.play();
 
       return true;
     },
@@ -433,6 +437,8 @@ export default Vue.extend({
   },
 
   async mounted() {
+    this.moveSound.load();
+
     if (
       this.$store.state.isLoggedIn
       && this.$store.state.lichessAccessToken
@@ -451,8 +457,6 @@ export default Vue.extend({
         await this.streamGame(this.gameId);
       }
     }
-
-    this.moveSound.autoplay = true;
   },
 });
 </script>
