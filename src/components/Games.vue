@@ -184,6 +184,7 @@ export default Vue.extend({
         B: '&#9821;',
         N: '&#9822;',
       } as { [key: string]: string; },
+      moveSound: new Audio(),
     };
   },
 
@@ -319,7 +320,7 @@ export default Vue.extend({
         this.boardImage = 'http://www.fen-to-image.com/image/26/double/coords/';
         this.boardImage += this.chessGame.fen();
 
-        this.soundNotification();
+        this.moveSound.src = 'audio/chess-move.mp3';
       };
 
       const onComplete = () => {
@@ -381,6 +382,8 @@ export default Vue.extend({
         this.alertMessage = '';
       }
 
+      this.moveSound.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+
       return true;
     },
 
@@ -427,31 +430,6 @@ export default Vue.extend({
 
       return newStr;
     },
-
-    unlockAudio() {
-      const sound = new Audio('audio/chess-move.mp3');
-
-      sound.play();
-      sound.pause();
-      sound.currentTime = 0;
-
-      document.body.removeEventListener('click', this.unlockAudio);
-      document.body.removeEventListener('touchstart', this.unlockAudio);
-    },
-
-    soundNotification() {
-      const sound = new Audio('audio/chess-move.mp3');
-
-      const promise = sound.play();
-
-      if (promise !== undefined) {
-        promise.then(() => {
-          // Do nothing
-        }).catch(() => {
-          // Do nothing
-        });
-      }
-    },
   },
 
   async mounted() {
@@ -474,8 +452,7 @@ export default Vue.extend({
       }
     }
 
-    document.body.addEventListener('click', this.unlockAudio);
-    document.body.addEventListener('touchstart', this.unlockAudio);
+    this.moveSound.autoplay = true;
   },
 });
 </script>
