@@ -17,7 +17,7 @@
       {{ alertMessage }}
     </t-alert>
     <div v-if="playingGame" class="mt-2">
-      <div v-if="paramShowKeyboard" class="keyboard flex flex-wrap">
+      <div v-if="paramShowKeyboard" class="keyboard flex flex-wrap items-center">
         <div
           v-for="(key, index) in keyboard" :key="index"
           v-html="replaceFigures(key)"
@@ -26,21 +26,21 @@
         >
         </div>
       </div>
-      <span v-if="isStreaming">
+      <div v-if="isStreaming" class="keyboard flex flex-wrap items-center">
         <input
           type="text"
           v-model="myNextMove"
           v-on:keyup.enter="sendMove"
           autofocus
           placeholder="Next move"
-          class="border-solid border-2 w-24 mt-2 mr-2"
+          class="border-solid border-2 w-24 h-10 mr-2"
         >
         <button
           v-if="paramShowKeyboard"
           class="key key-erase"
           v-on:click="keyboardErase()"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -54,7 +54,7 @@
           class="key key-enter"
           v-on:click="sendMove"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -66,7 +66,7 @@
           class="key key-resign"
           v-on:click="resignGame"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -75,8 +75,8 @@
               3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
           </svg>
         </button>
-      </span>
-      <ul class="mt-2">
+      </div>
+      <ul class="mt-2 moves-list">
         <li v-for="(line, index) in gameLines" :key="index" v-html="replaceFigures(line)"></li>
       </ul>
     </div>
@@ -86,14 +86,14 @@
       <span>
         (Stockfish level
         <select name="AILevel" id="AILevel-select" v-model="AILevel">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
+          <option value="1">1 (800)</option>
+          <option value="2">2 (1100)</option>
+          <option value="3">3 (1400)</option>
+          <option value="4">4 (1700)</option>
+          <option value="5">5 (2000)</option>
+          <option value="6">6 (2300)</option>
+          <option value="7">7 (2700)</option>
+          <option value="8">8 (3000)</option>
         </select>
         )
       </span>
@@ -171,10 +171,10 @@ export default Vue.extend({
       /* eslint-disable comma-spacing */
       keyboard: [
         'a','b','c','d','e','f','g','h',
-        'break',
+        'K','Q','R','B','N',
         '1','2','3','4','5','6','7','8',
-        'break',
-        'K','Q','R','B','N','x','-','O',
+        'x','-','O',
+
       ],
       /* eslint-enable comma-spacing */
       figuresMapping: {
@@ -184,6 +184,7 @@ export default Vue.extend({
         B: '&#9821;',
         N: '&#9822;',
       } as { [key: string]: string; },
+      chessSound: new Audio('audio/chess-move.mp3'),
     };
   },
 
@@ -283,11 +284,25 @@ export default Vue.extend({
         let lineNumber = 1;
         let orderedMoves = Array.from(history, (value, index) => {
           if (index % 2 === 0 || index === 0) {
+            let whiteClasses = '';
+            let blackClasses = '';
+
+            if (history.length === (index + 1)) {
+              whiteClasses += ' last-move';
+            }
+
+            if (
+              history[index + 1] !== undefined
+              && history.length === (index + 2)
+            ) {
+              blackClasses += ' last-move';
+            }
+
             let line = `<span class="move-number">${lineNumber}.</span>`;
-            line += `<span class="white-move">${history[index]}</span>`;
+            line += `<span class="white-move${whiteClasses}">${history[index]}</span>`;
 
             if (history[index + 1] !== undefined) {
-              line += `<span class="black-move">${history[index + 1]}</span>`;
+              line += `<span class="black-move${blackClasses}">${history[index + 1]}</span>`;
             }
 
             lineNumber += 1;
@@ -304,6 +319,8 @@ export default Vue.extend({
 
         this.boardImage = 'http://www.fen-to-image.com/image/26/double/coords/';
         this.boardImage += this.chessGame.fen();
+
+        this.chessSound.play();
       };
 
       const onComplete = () => {
@@ -324,7 +341,7 @@ export default Vue.extend({
           Authorization: `Bearer ${this.$store.state.lichessAccessToken}`,
         },
         body: new URLSearchParams({
-          level: '1',
+          level: this.AILevel,
           color: 'random',
           variant: 'standard',
         }),
@@ -437,6 +454,13 @@ export default Vue.extend({
 </script>
 
 <style lang="postcss">
+.moves-list {
+  font-size: 1.2rem;
+}
+.last-move {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
 .move-number {
   display: inline-block;
   min-width: 35px;
@@ -449,10 +473,11 @@ export default Vue.extend({
 .key {
     cursor: pointer;
     border: 1px solid;
-    padding: 5px 10px;
+    padding: 5px 18px;
     margin-right: 5px;
     margin-bottom: 5px;
     border-radius: 5px;
+    font-size: 2rem;
 }
 .key-break {
   flex-basis: 100%;
