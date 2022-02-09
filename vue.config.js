@@ -1,5 +1,5 @@
 module.exports = {
-  publicPath: '/blindfoldchess/',
+  publicPath: '/blindfoldchess_prototype/',
   pwa: {
     name: 'Blindfold Lichess',
     themeColor: '#42b983',
