@@ -184,8 +184,6 @@ export default Vue.extend({
         B: '&#9821;',
         N: '&#9822;',
       } as { [key: string]: string; },
-      moveSound: new Audio('audio/chess-move.mp3'),
-      firstMoveSent: false as boolean,
     };
   },
 
@@ -320,11 +318,6 @@ export default Vue.extend({
 
         this.boardImage = 'http://www.fen-to-image.com/image/26/double/coords/';
         this.boardImage += this.chessGame.fen();
-
-        if (this.firstMoveSent) {
-          this.moveSound.currentTime = 0;
-          this.moveSound.play();
-        }
       };
 
       const onComplete = () => {
@@ -386,11 +379,6 @@ export default Vue.extend({
         this.alertMessage = '';
       }
 
-      this.moveSound.currentTime = 0;
-      this.moveSound.play();
-
-      this.firstMoveSent = true;
-
       return true;
     },
 
@@ -440,8 +428,6 @@ export default Vue.extend({
   },
 
   async mounted() {
-    this.moveSound.load();
-
     if (
       this.$store.state.isLoggedIn
       && this.$store.state.lichessAccessToken
